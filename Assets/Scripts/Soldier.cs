@@ -23,8 +23,13 @@ public class Soldier : MonoBehaviour
 
     [Header("UI")]
     public TextMeshProUGUI leftCoinsText;
+    public TextMeshProUGUI coinsDoneText;
     [SerializeField] private int startCoins = 10;
 
+    int attackIndex = 0;
+
+    public GameObject arrowPrefab;
+    public Transform firePoint;
 
     void Start()
     {
@@ -39,6 +44,14 @@ public class Soldier : MonoBehaviour
         {
             Jump();
         }
+        if (Input.GetMouseButtonDown(0))
+        {
+            Attack();
+        }
+        if (Input.GetMouseButtonDown(1))
+        {
+            AttackWithBow();
+        }
     }
     void Jump()
     {
@@ -46,6 +59,26 @@ public class Soldier : MonoBehaviour
         rb.AddForce(new Vector2(0, jumpForce), ForceMode2D.Impulse);
         isGrounded = false;
     }
+    void Attack()
+    {
+        AudioSource.PlayClipAtPoint(attackSound, transform.position);
+        attackIndex++;
+        if (attackIndex > 2) attackIndex = 1;
+        anim.SetInteger("AttackIndex", attackIndex);
+        anim.SetTrigger("Attack");
+    }
+    void AttackWithBow()
+    {
+        AudioSource.PlayClipAtPoint(attackSound, transform.position);
+        anim.SetTrigger("BowAttack");
+
+        GameObject arrowObj = Instantiate(arrowPrefab, firePoint.position, Quaternion.identity);
+        Arrow arrow = arrowObj.GetComponent<Arrow>();
+
+        Vector2 shootDir = sprite.flipX ? Vector2.left : Vector2.right;
+        arrow.Initialize(shootDir);
+    }
+
     private void FixedUpdate()
     {
         float x = Input.GetAxis("Horizontal");
@@ -64,7 +97,7 @@ public class Soldier : MonoBehaviour
             transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
         }
     }
-    private void OnCollisionEnter2D(Collision2D other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.gameObject.CompareTag("Coin"))
         {
@@ -72,7 +105,16 @@ public class Soldier : MonoBehaviour
             Destroy(other.gameObject);
             startCoins--;
             leftCoinsText.text = "Coins Left:" + startCoins.ToString();
+            if (leftCoinsText.text == "Coins Left:0")
+            {
+                coinsDoneText.gameObject.SetActive(true);
+                leftCoinsText.gameObject.SetActive(false);
+                Invoke("TextClean", 2f);
+            }
         }
+    }
+    private void OnCollisionEnter2D(Collision2D other)
+    {
         if (other.gameObject.CompareTag("Flag"))
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -81,5 +123,9 @@ public class Soldier : MonoBehaviour
         {
             isGrounded = true;
         }
+    }
+    void TextClean()
+    {
+        coinsDoneText.gameObject.SetActive(false);
     }
 }
