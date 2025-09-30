@@ -20,5 +20,9 @@ public class Arrow : MonoBehaviour
     void Update()
     {
         transform.Translate(direction * speed * Time.deltaTime);
+        if (Mathf.Abs(transform.position.x) > 50 || Mathf.Abs(transform.position.y) > 50)
+        {
+            Destroy(gameObject);
+        }
     }
 }

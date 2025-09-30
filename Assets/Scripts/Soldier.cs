@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 using TMPro;
+using UnityEngine.UI;
 
 public class Soldier : MonoBehaviour
 {
@@ -30,10 +31,17 @@ public class Soldier : MonoBehaviour
 
     public GameObject arrowPrefab;
     public Transform firePoint;
+    public bool isFinished;
+    [Header("Attack and Health")]
+    public Image healthBar;
+    private int maxHealth = 200;
+    public int currentHealth;
+    private int attackDamage = 25;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        currentHealth = maxHealth;
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
     }
@@ -50,7 +58,7 @@ public class Soldier : MonoBehaviour
         }
         if (Input.GetMouseButtonDown(1))
         {
-            AttackWithBow();
+            BowAttack();
         }
     }
     void Jump()
@@ -67,7 +75,7 @@ public class Soldier : MonoBehaviour
         anim.SetInteger("AttackIndex", attackIndex);
         anim.SetTrigger("Attack");
     }
-    void AttackWithBow()
+    void BowAttack()
     {
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
         anim.SetTrigger("BowAttack");
@@ -78,6 +86,19 @@ public class Soldier : MonoBehaviour
         Vector2 shootDir = sprite.flipX ? Vector2.left : Vector2.right;
         arrow.Initialize(shootDir);
     }
+
+    public void GetDamage(int damage)
+    {
+        currentHealth -= damage;
+        HealthBar();
+        AudioSource.PlayClipAtPoint(hurtSound, transform.position);
+        anim.SetTrigger("Hurt");
+    }
+    void HealthBar()
+    {
+        healthBar.fillAmount = (float)currentHealth / maxHealth;
+    }
+
 
     private void FixedUpdate()
     {
@@ -97,6 +118,10 @@ public class Soldier : MonoBehaviour
             transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
         }
     }
+
+
+
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.gameObject.CompareTag("Coin"))
@@ -108,6 +133,7 @@ public class Soldier : MonoBehaviour
             if (leftCoinsText.text == "Coins Left:0")
             {
                 coinsDoneText.gameObject.SetActive(true);
+                isFinished = true;
                 leftCoinsText.gameObject.SetActive(false);
                 Invoke("TextClean", 2f);
             }
@@ -115,7 +141,7 @@ public class Soldier : MonoBehaviour
     }
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.CompareTag("Flag"))
+        if (other.gameObject.CompareTag("Flag") && isFinished)
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
