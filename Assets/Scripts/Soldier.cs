@@ -32,6 +32,7 @@ public class Soldier : MonoBehaviour
     public GameObject arrowPrefab;
     public Transform firePoint;
     public bool isFinished;
+    
     [Header("Attack and Health")]
     public Image healthBar;
     private int maxHealth = 200;

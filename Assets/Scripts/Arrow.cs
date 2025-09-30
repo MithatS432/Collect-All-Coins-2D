@@ -25,4 +25,17 @@ public class Arrow : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.CompareTag("Enemy"))
+        {
+            Enemy enemy = other.gameObject.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.GetDamage(damage);
+                Destroy(gameObject);
+
+            }
+        }
+    }
 }
