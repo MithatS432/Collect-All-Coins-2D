@@ -17,6 +17,8 @@ public class Enemy : MonoBehaviour
     public RectTransform healthBarRect;
     public Vector3 offset = new Vector3(0, 2f, 0);
 
+    private bool isDead = false;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -24,11 +26,19 @@ public class Enemy : MonoBehaviour
         currentHealth = maxHealth;
     }
 
-    void Update()
+    void LateUpdate()
     {
-        if (healthBarRect != null)
+        if (isDead || healthBarRect == null) return;
+
+        try
         {
-            healthBarRect.position = Camera.main.WorldToScreenPoint(transform.position + offset);
+            Vector3 screenPoint = Camera.main.WorldToScreenPoint(transform.position + offset);
+            healthBarRect.position = screenPoint;
+        }
+        catch
+        {
+            if (healthBarRect != null)
+                Destroy(healthBarRect.gameObject);
         }
     }
 
@@ -50,18 +60,22 @@ public class Enemy : MonoBehaviour
     {
         if (healthBarImage != null)
         {
-            float healthPercent = Mathf.Clamp01(currentHealth / maxHealth);
-            healthBarImage.fillAmount = healthPercent;
+            healthBarImage.fillAmount = currentHealth / maxHealth;
         }
     }
 
     private void Die()
     {
         isAlive = false;
+        isDead = true;
         anim.SetTrigger("Die");
-        Destroy(gameObject, 2f);
 
         if (healthBarRect != null)
+        {
             Destroy(healthBarRect.gameObject);
+            healthBarRect = null;
+        }
+
+        Destroy(gameObject, 2f);
     }
 }

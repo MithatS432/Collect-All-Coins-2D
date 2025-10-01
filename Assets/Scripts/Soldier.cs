@@ -32,12 +32,11 @@ public class Soldier : MonoBehaviour
     public GameObject arrowPrefab;
     public Transform firePoint;
     public bool isFinished;
-    
+
     [Header("Attack and Health")]
     public Image healthBar;
     private int maxHealth = 200;
     public int currentHealth;
-    private int attackDamage = 25;
 
     void Start()
     {
@@ -88,6 +87,7 @@ public class Soldier : MonoBehaviour
         arrow.Initialize(shootDir);
     }
 
+
     public void GetDamage(int damage)
     {
         currentHealth -= damage;
@@ -99,6 +99,7 @@ public class Soldier : MonoBehaviour
     {
         healthBar.fillAmount = (float)currentHealth / maxHealth;
     }
+
 
 
     private void FixedUpdate()
@@ -131,7 +132,7 @@ public class Soldier : MonoBehaviour
             Destroy(other.gameObject);
             startCoins--;
             leftCoinsText.text = "Coins Left:" + startCoins.ToString();
-            if (leftCoinsText.text == "Coins Left:0")
+            if (startCoins <= 0)
             {
                 coinsDoneText.gameObject.SetActive(true);
                 isFinished = true;
