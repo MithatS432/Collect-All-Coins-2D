@@ -10,20 +10,26 @@ public class Enemy : MonoBehaviour
     [Header("Stats")]
     private float maxHealth = 50f;
     private float currentHealth;
+    private float moveSpeed = 2f;
     private bool isAlive = true;
+    private bool isDead = false;
+    public GameObject player;
+    private Vector3 originalScale;
+    private float attackRange = 2f;
+
 
     [Header("UI")]
     public Image healthBarImage;
     public RectTransform healthBarRect;
     public Vector3 offset = new Vector3(0, 2f, 0);
 
-    private bool isDead = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         currentHealth = maxHealth;
+        originalScale = transform.localScale;
     }
 
     void LateUpdate()
@@ -41,14 +47,42 @@ public class Enemy : MonoBehaviour
                 Destroy(healthBarRect.gameObject);
         }
     }
+    private void Update()
+    {
+        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+        Vector3 direction = (player.transform.position - transform.position).normalized;
+
+        if (distanceToPlayer < attackRange)
+        {
+            anim.SetTrigger("AttackE");
+        }
+
+        if (isAlive && distanceToPlayer > 1f)
+        {
+            rb.linearVelocity = new Vector2(direction.x * moveSpeed, rb.linearVelocity.y);
+            anim.SetFloat("SpeedE", Mathf.Abs(rb.linearVelocity.x));
+
+            if (direction.x > 0)
+                transform.localScale = new Vector3(Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
+            else
+                transform.localScale = new Vector3(-Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
+
+        }
+        else
+        {
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            anim.SetFloat("SpeedE", 0f);
+        }
+    }
+
 
     public void GetDamage(float damageAmount)
     {
         if (!isAlive) return;
 
         currentHealth -= damageAmount;
-        UpdateHealthBar();
         anim.SetTrigger("Hurt");
+        UpdateHealthBar();
 
         if (currentHealth <= 0)
         {
@@ -76,6 +110,6 @@ public class Enemy : MonoBehaviour
             healthBarRect = null;
         }
 
-        Destroy(gameObject, 2f);
+        Destroy(gameObject, 1f);
     }
 }

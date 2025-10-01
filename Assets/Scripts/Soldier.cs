@@ -55,6 +55,11 @@ public class Soldier : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Attack();
+            SwordAttack swordAttack = GetComponentInChildren<SwordAttack>();
+            if (swordAttack != null)
+            {
+                swordAttack.SetAttackSwordAnimation();
+            }
         }
         if (Input.GetMouseButtonDown(1))
         {
@@ -94,10 +99,19 @@ public class Soldier : MonoBehaviour
         HealthBar();
         AudioSource.PlayClipAtPoint(hurtSound, transform.position);
         anim.SetTrigger("Hurt");
+        if (currentHealth <= 0)
+        {
+            AudioSource.PlayClipAtPoint(deathSound, transform.position);
+            Invoke("Die", 1f);
+        }
     }
     void HealthBar()
     {
         healthBar.fillAmount = (float)currentHealth / maxHealth;
+    }
+    void Die()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
 
