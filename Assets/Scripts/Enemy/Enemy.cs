@@ -15,7 +15,12 @@ public class Enemy : MonoBehaviour
     private bool isDead = false;
     public GameObject player;
     private Vector3 originalScale;
-    private float attackRange = 2f;
+    private float attackRange = 1.5f;
+    public EnemyAxeAttack enemyaxe;
+    private float attackCooldown = 1f;
+    private float lastAttackTime;
+    private float viewDistance = 7f;
+
 
 
     [Header("UI")]
@@ -30,6 +35,8 @@ public class Enemy : MonoBehaviour
         anim = GetComponent<Animator>();
         currentHealth = maxHealth;
         originalScale = transform.localScale;
+        if (anim == null)
+            anim = GetComponent<Animator>() ?? GetComponentInParent<Animator>();
     }
 
     void LateUpdate()
@@ -52,13 +59,19 @@ public class Enemy : MonoBehaviour
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
         Vector3 direction = (player.transform.position - transform.position).normalized;
 
-        if (distanceToPlayer < attackRange)
+        if (distanceToPlayer < attackRange && Time.time - lastAttackTime > attackCooldown)
         {
             anim.SetTrigger("AttackE");
+            if (enemyaxe != null)
+            {
+                enemyaxe.AxeAnimation();
+            }
+            lastAttackTime = Time.time;
         }
 
-        if (isAlive && distanceToPlayer > 1f)
+        if (isAlive && distanceToPlayer > 1f && distanceToPlayer < viewDistance)
         {
+
             rb.linearVelocity = new Vector2(direction.x * moveSpeed, rb.linearVelocity.y);
             anim.SetFloat("SpeedE", Mathf.Abs(rb.linearVelocity.x));
 

@@ -87,8 +87,6 @@ public class Soldier : MonoBehaviour
             swordAttack.DoSwordAttack();
         }
     }
-
-
     void BowAttack()
     {
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
@@ -103,6 +101,7 @@ public class Soldier : MonoBehaviour
 
 
 
+
     public void GetDamage(int damage)
     {
         currentHealth -= damage;
@@ -112,7 +111,8 @@ public class Soldier : MonoBehaviour
         if (currentHealth <= 0)
         {
             AudioSource.PlayClipAtPoint(deathSound, transform.position);
-            Invoke("Die", 1f);
+            anim.SetTrigger("Die");
+            Invoke("Die", 1.5f);
         }
     }
 
