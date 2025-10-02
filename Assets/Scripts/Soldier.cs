@@ -38,12 +38,16 @@ public class Soldier : MonoBehaviour
     private int maxHealth = 200;
     public int currentHealth;
 
+    private SwordAttack swordAttack;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         currentHealth = maxHealth;
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
+
+        swordAttack = GetComponentInChildren<SwordAttack>();
     }
 
     void Update()
@@ -55,31 +59,36 @@ public class Soldier : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Attack();
-            SwordAttack swordAttack = GetComponentInChildren<SwordAttack>();
-            if (swordAttack != null)
-            {
-                swordAttack.SetAttackSwordAnimation();
-            }
         }
         if (Input.GetMouseButtonDown(1))
         {
             BowAttack();
         }
     }
+
     void Jump()
     {
         AudioSource.PlayClipAtPoint(jumpSound, transform.position);
         rb.AddForce(new Vector2(0, jumpForce), ForceMode2D.Impulse);
         isGrounded = false;
     }
+
     void Attack()
     {
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
         attackIndex++;
         if (attackIndex > 2) attackIndex = 1;
+
         anim.SetInteger("AttackIndex", attackIndex);
         anim.SetTrigger("Attack");
+
+        if (swordAttack != null)
+        {
+            swordAttack.DoSwordAttack();
+        }
     }
+
+
     void BowAttack()
     {
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
@@ -91,6 +100,7 @@ public class Soldier : MonoBehaviour
         Vector2 shootDir = sprite.flipX ? Vector2.left : Vector2.right;
         arrow.Initialize(shootDir);
     }
+
 
 
     public void GetDamage(int damage)
@@ -105,10 +115,12 @@ public class Soldier : MonoBehaviour
             Invoke("Die", 1f);
         }
     }
+
     void HealthBar()
     {
         healthBar.fillAmount = (float)currentHealth / maxHealth;
     }
+
     void Die()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -121,20 +133,15 @@ public class Soldier : MonoBehaviour
         float x = Input.GetAxis("Horizontal");
         transform.position += new Vector3(x, 0, 0) * Time.deltaTime * speed;
         anim.SetFloat("Speed", Mathf.Abs(x));
-        if (x < 0)
-        {
-            sprite.flipX = true;
-        }
-        else if (x > 0)
-        {
-            sprite.flipX = false;
-        }
+
+        if (x < 0) sprite.flipX = true;
+        else if (x > 0) sprite.flipX = false;
+
         if (transform.position.x < xRange)
         {
             transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
         }
     }
-
 
 
 
@@ -155,6 +162,7 @@ public class Soldier : MonoBehaviour
             }
         }
     }
+
     private void OnCollisionEnter2D(Collision2D other)
     {
         if (other.gameObject.CompareTag("Flag") && isFinished)
@@ -166,6 +174,7 @@ public class Soldier : MonoBehaviour
             isGrounded = true;
         }
     }
+
     void TextClean()
     {
         coinsDoneText.gameObject.SetActive(false);
