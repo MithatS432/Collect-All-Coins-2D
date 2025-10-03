@@ -23,6 +23,7 @@ public class Field1MenuManager : MonoBehaviour
     {
         continueButton.gameObject.SetActive(false);
         mainMenuButton.gameObject.SetActive(false);
+        Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }
 }

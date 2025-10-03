@@ -3,6 +3,7 @@ using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class Soldier : MonoBehaviour
 {
@@ -25,13 +26,19 @@ public class Soldier : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI leftCoinsText;
     public TextMeshProUGUI coinsDoneText;
+    public TextMeshProUGUI leftArrowsText;
     [SerializeField] private int startCoins = 10;
+    [SerializeField] private int startArrows = 10;
 
     int attackIndex = 0;
 
+    [Header("Arrow")]
     public GameObject arrowPrefab;
     public Transform firePoint;
+    private List<GameObject> arrowPool = new List<GameObject>();
+    private int poolSize = 10;
     public bool isFinished;
+    private bool isArrowLeft = true;
 
     [Header("Attack and Health")]
     public Image healthBar;
@@ -48,6 +55,13 @@ public class Soldier : MonoBehaviour
         sprite = GetComponent<SpriteRenderer>();
 
         swordAttack = GetComponentInChildren<SwordAttack>();
+
+        for (int i = 0; i < poolSize; i++)
+        {
+            GameObject arrow = Instantiate(arrowPrefab);
+            arrow.SetActive(false);
+            arrowPool.Add(arrow);
+        }
     }
 
     void Update()
@@ -60,7 +74,7 @@ public class Soldier : MonoBehaviour
         {
             Attack();
         }
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1) && isArrowLeft)
         {
             BowAttack();
         }
@@ -87,20 +101,53 @@ public class Soldier : MonoBehaviour
             swordAttack.DoSwordAttack();
         }
     }
+
     void BowAttack()
     {
+        startArrows--;
+        leftArrowsText.text = "Arrows Left:" + startArrows.ToString();
+        if (startArrows <= 0)
+        {
+            isArrowLeft = false;
+            leftArrowsText.text = "None";
+        }
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
         anim.SetTrigger("BowAttack");
 
-        GameObject arrowObj = Instantiate(arrowPrefab, firePoint.position, Quaternion.identity);
-        Arrow arrow = arrowObj.GetComponent<Arrow>();
+        GameObject arrowObj = GetArrowFromPool();
+        if (arrowObj != null)
+        {
+            arrowObj.transform.position = firePoint.position;
+            arrowObj.SetActive(true);
 
-        Vector2 shootDir = sprite.flipX ? Vector2.left : Vector2.right;
-        arrow.Initialize(shootDir);
+            Arrow arrow = arrowObj.GetComponent<Arrow>();
+            Vector2 shootDir = sprite.flipX ? Vector2.left : Vector2.right;
+            arrow.Initialize(shootDir);
+        }
     }
 
+    GameObject GetArrowFromPool()
+    {
+        foreach (GameObject arrow in arrowPool)
+        {
+            if (!arrow.activeInHierarchy)
+                return arrow;
+        }
+        return null;
+    }
 
-
+    public void AddArrowsToPool(int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            GameObject arrow = Instantiate(arrowPrefab);
+            arrow.SetActive(false);
+            arrowPool.Add(arrow);
+        }
+        startArrows += amount;
+        isArrowLeft = true;
+        leftArrowsText.text = "Arrows Left:" + startArrows.ToString();
+    }
 
     public void GetDamage(int damage)
     {
@@ -126,8 +173,6 @@ public class Soldier : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
-
-
     private void FixedUpdate()
     {
         float x = Input.GetAxis("Horizontal");
@@ -142,8 +187,6 @@ public class Soldier : MonoBehaviour
             transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
         }
     }
-
-
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -160,6 +203,12 @@ public class Soldier : MonoBehaviour
                 leftCoinsText.gameObject.SetActive(false);
                 Invoke("TextClean", 2f);
             }
+        }
+
+        if (other.gameObject.CompareTag("ArrowItem"))
+        {
+            Destroy(other.gameObject);
+            AddArrowsToPool(5);
         }
     }
 

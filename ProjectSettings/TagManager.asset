@@ -9,6 +9,7 @@ TagManager:
   - Ground
   - Arrow
   - Enemy
+  - ArrowItem
   layers:
   - Default
   - TransparentFX

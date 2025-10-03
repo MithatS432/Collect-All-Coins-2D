@@ -4,7 +4,6 @@ public class Arrow : MonoBehaviour
 {
     public float speed = 50f;
     public float damage = 10f;
-    public LayerMask collisionLayers;
 
     private Vector2 direction;
     private Rigidbody2D rb;
@@ -34,7 +33,7 @@ public class Arrow : MonoBehaviour
 
         if (Mathf.Abs(transform.position.x) > 125 || Mathf.Abs(transform.position.y) > 50)
         {
-            Destroy(gameObject);
+            gameObject.SetActive(false); 
         }
     }
 
@@ -49,7 +48,7 @@ public class Arrow : MonoBehaviour
             {
                 enemy.GetDamage(damage);
             }
-            Destroy(gameObject);
+            gameObject.SetActive(false); 
         }
     }
 }
