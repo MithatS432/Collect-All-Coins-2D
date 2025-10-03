@@ -1,8 +1,5 @@
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
-using TMPro;
-using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class Soldier : MonoBehaviour
@@ -11,11 +8,7 @@ public class Soldier : MonoBehaviour
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer sprite;
-    public AudioClip attackSound;
-    public AudioClip hurtSound;
-    public AudioClip deathSound;
-    public AudioClip coinSound;
-    public AudioClip jumpSound;
+    public AudioClip attackSound, hurtSound, deathSound, coinSound, jumpSound;
 
     [Header("State")]
     public bool isGrounded;
@@ -23,38 +16,57 @@ public class Soldier : MonoBehaviour
     private float jumpForce = 7f;
     private float xRange = -10f;
 
-    [Header("UI")]
-    public TextMeshProUGUI leftCoinsText;
-    public TextMeshProUGUI coinsDoneText;
-    public TextMeshProUGUI leftArrowsText;
+    [Header("Gameplay")]
     [SerializeField] private int startCoins = 10;
     [SerializeField] private int startArrows = 10;
-
-    int attackIndex = 0;
+    public int currentHealth;
+    private int maxHealth = 200;
+    private bool isArrowLeft = true;
+    public bool isFinished;
 
     [Header("Arrow")]
     public GameObject arrowPrefab;
     public Transform firePoint;
     private List<GameObject> arrowPool = new List<GameObject>();
     private int poolSize = 10;
-    public bool isFinished;
-    private bool isArrowLeft = true;
-
-    [Header("Attack and Health")]
-    public Image healthBar;
-    private int maxHealth = 200;
-    public int currentHealth;
 
     private SwordAttack swordAttack;
+    private int attackIndex = 0;
+
+    void Awake()
+    {
+        if (SceneManager.GetActiveScene().name == "MainMenu")
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        DontDestroyOnLoad(gameObject);
+
+        SceneManager.activeSceneChanged += OnSceneChanged;
+    }
+    private void OnSceneChanged(Scene oldScene, Scene newScene)
+    {
+        if (newScene.name == "MainMenu")
+        {
+            Destroy(gameObject);
+        }
+    }
 
     void Start()
     {
+        //PlayerPrefs.DeleteAll();
         rb = GetComponent<Rigidbody2D>();
-        currentHealth = maxHealth;
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
-
         swordAttack = GetComponentInChildren<SwordAttack>();
+
+        currentHealth = PlayerPrefs.HasKey("Health") ? PlayerPrefs.GetInt("Health") : maxHealth;
+        startArrows = PlayerPrefs.HasKey("Arrows") ? PlayerPrefs.GetInt("Arrows") : startArrows;
+
+        UIManager.instance.UpdateArrows(startArrows);
+        UIManager.instance.UpdateCoins(startCoins);
+        UIManager.instance.UpdateHealth((float)currentHealth / maxHealth);
 
         for (int i = 0; i < poolSize; i++)
         {
@@ -66,24 +78,28 @@ public class Soldier : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            Jump();
-        }
-        if (Input.GetMouseButtonDown(0))
-        {
-            Attack();
-        }
-        if (Input.GetMouseButtonDown(1) && isArrowLeft)
-        {
-            BowAttack();
-        }
+        if (Input.GetButtonDown("Jump") && isGrounded) Jump();
+        if (Input.GetMouseButtonDown(0)) Attack();
+        if (Input.GetMouseButtonDown(1) && isArrowLeft) BowAttack();
+    }
+
+    void FixedUpdate()
+    {
+        float x = Input.GetAxis("Horizontal");
+        transform.position += new Vector3(x, 0, 0) * Time.fixedDeltaTime * speed;
+        anim.SetFloat("Speed", Mathf.Abs(x));
+
+        if (x < 0) sprite.flipX = true;
+        else if (x > 0) sprite.flipX = false;
+
+        if (transform.position.x < xRange)
+            transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
     }
 
     void Jump()
     {
         AudioSource.PlayClipAtPoint(jumpSound, transform.position);
-        rb.AddForce(new Vector2(0, jumpForce), ForceMode2D.Impulse);
+        rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         isGrounded = false;
     }
 
@@ -96,21 +112,16 @@ public class Soldier : MonoBehaviour
         anim.SetInteger("AttackIndex", attackIndex);
         anim.SetTrigger("Attack");
 
-        if (swordAttack != null)
-        {
-            swordAttack.DoSwordAttack();
-        }
+        if (swordAttack != null) swordAttack.DoSwordAttack();
     }
 
     void BowAttack()
     {
         startArrows--;
-        leftArrowsText.text = "Arrows Left:" + startArrows.ToString();
-        if (startArrows <= 0)
-        {
-            isArrowLeft = false;
-            leftArrowsText.text = "None";
-        }
+        PlayerPrefs.SetInt("Arrows", startArrows);
+        UIManager.instance.UpdateArrows(startArrows);
+        if (startArrows <= 0) isArrowLeft = false;
+
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
         anim.SetTrigger("BowAttack");
 
@@ -130,11 +141,12 @@ public class Soldier : MonoBehaviour
     {
         foreach (GameObject arrow in arrowPool)
         {
-            if (!arrow.activeInHierarchy)
+            if (arrow != null && !arrow.activeInHierarchy)
                 return arrow;
         }
         return null;
     }
+
 
     public void AddArrowsToPool(int amount)
     {
@@ -146,46 +158,32 @@ public class Soldier : MonoBehaviour
         }
         startArrows += amount;
         isArrowLeft = true;
-        leftArrowsText.text = "Arrows Left:" + startArrows.ToString();
+        PlayerPrefs.SetInt("Arrows", startArrows);
+        UIManager.instance.UpdateArrows(startArrows);
     }
 
     public void GetDamage(int damage)
     {
         currentHealth -= damage;
-        HealthBar();
+        PlayerPrefs.SetInt("Health", currentHealth);
+        UIManager.instance.UpdateHealth((float)currentHealth / maxHealth);
+
         AudioSource.PlayClipAtPoint(hurtSound, transform.position);
         anim.SetTrigger("Hurt");
+
         if (currentHealth <= 0)
         {
             AudioSource.PlayClipAtPoint(deathSound, transform.position);
             anim.SetTrigger("Die");
-            Invoke("Die", 1.5f);
+            Invoke(nameof(Die), 1.5f);
         }
     }
 
-    void HealthBar()
+    private void Die()
     {
-        healthBar.fillAmount = (float)currentHealth / maxHealth;
-    }
-
-    void Die()
-    {
+        PlayerPrefs.DeleteKey("Health");
+        PlayerPrefs.DeleteKey("Arrows");
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-
-    private void FixedUpdate()
-    {
-        float x = Input.GetAxis("Horizontal");
-        transform.position += new Vector3(x, 0, 0) * Time.deltaTime * speed;
-        anim.SetFloat("Speed", Mathf.Abs(x));
-
-        if (x < 0) sprite.flipX = true;
-        else if (x > 0) sprite.flipX = false;
-
-        if (transform.position.x < xRange)
-        {
-            transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
-        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -195,13 +193,12 @@ public class Soldier : MonoBehaviour
             AudioSource.PlayClipAtPoint(coinSound, transform.position);
             Destroy(other.gameObject);
             startCoins--;
-            leftCoinsText.text = "Coins Left:" + startCoins.ToString();
+            UIManager.instance.UpdateCoins(startCoins);
+
             if (startCoins <= 0)
             {
-                coinsDoneText.gameObject.SetActive(true);
                 isFinished = true;
-                leftCoinsText.gameObject.SetActive(false);
-                Invoke("TextClean", 2f);
+                UIManager.instance.HideCoinsDoneText(2f);
             }
         }
 
@@ -216,16 +213,13 @@ public class Soldier : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Flag") && isFinished)
         {
+            PlayerPrefs.SetInt("Health", currentHealth);
+            PlayerPrefs.SetInt("Arrows", startArrows);
+            PlayerPrefs.Save();
+
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
         if (other.gameObject.CompareTag("Ground"))
-        {
             isGrounded = true;
-        }
-    }
-
-    void TextClean()
-    {
-        coinsDoneText.gameObject.SetActive(false);
     }
 }
