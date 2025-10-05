@@ -850,7 +850,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1623379711}
+      - m_Target: {fileID: 1251297984}
         m_TargetAssemblyTypeName: Field1MenuManager, Assembly-CSharp
         m_MethodName: PauseGame
         m_Mode: 1
@@ -1121,7 +1121,7 @@ GameObject:
   - component: {fileID: 507299094}
   - component: {fileID: 507299093}
   m_Layer: 5
-  m_Name: Back to MainMenu
+  m_Name: MainMenuButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1191,7 +1191,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1623379711}
+      - m_Target: {fileID: 1251297984}
         m_TargetAssemblyTypeName: Field1MenuManager, Assembly-CSharp
         m_MethodName: BackMainMenu
         m_Mode: 1
@@ -1827,9 +1827,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1251297983}
   - component: {fileID: 1251297982}
+  - component: {fileID: 1251297984}
   - component: {fileID: 1251297981}
   - component: {fileID: 1251297980}
-  - component: {fileID: 1251297984}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1937,13 +1937,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1251297979}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 082cf95fee3f9c147bcffe0a687749c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 6d936339c584ada4183e303640ceb647, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  leftCoinsText: {fileID: 990073563}
-  coinsDoneText: {fileID: 1857869998}
-  leftArrowsText: {fileID: 825507613}
-  healthBar: {fileID: 1888641538}
 --- !u!1 &1274682749
 GameObject:
   m_ObjectHideFlags: 0
@@ -2098,6 +2094,55 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6951547278497518555, guid: 422435f68a3f26845813dc536054f859, type: 3}
   m_PrefabInstance: {fileID: 6502042555858870112}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1601948409
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1601948411}
+  - component: {fileID: 1601948410}
+  m_Layer: 0
+  m_Name: PauseMenuCanvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1601948410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1601948409}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 082cf95fee3f9c147bcffe0a687749c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leftCoinsText: {fileID: 990073563}
+  coinsDoneText: {fileID: 1857869998}
+  leftArrowsText: {fileID: 825507613}
+  healthBar: {fileID: 1888641538}
+  pauseMenuCanvas: {fileID: 1251297979}
+--- !u!4 &1601948411
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1601948409}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.28982782, y: 0.23773736, z: -10.038203}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1610587832
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2160,52 +2205,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1253324704406089986, guid: 283e3afc87f8ca847bc0904e1beec9a1, type: 3}
   m_PrefabInstance: {fileID: 1610587832}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1623379709
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1623379710}
-  - component: {fileID: 1623379711}
-  m_Layer: 0
-  m_Name: Field1 Menu Manager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1623379710
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1623379709}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 666.8454, y: 333.92526, z: -0.5359712}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1623379711
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1623379709}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d936339c584ada4183e303640ceb647, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  continueButton: {fileID: 2054641085}
-  mainMenuButton: {fileID: 507299093}
 --- !u!1 &1648310159
 GameObject:
   m_ObjectHideFlags: 0
@@ -3142,7 +3141,7 @@ GameObject:
   - component: {fileID: 2054641086}
   - component: {fileID: 2054641085}
   m_Layer: 5
-  m_Name: Continue Game
+  m_Name: ContinueButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3212,7 +3211,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1623379711}
+      - m_Target: {fileID: 1251297984}
         m_TargetAssemblyTypeName: Field1MenuManager, Assembly-CSharp
         m_MethodName: ContinueGame
         m_Mode: 1
@@ -16864,7 +16863,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6951547278497518555, guid: 422435f68a3f26845813dc536054f859, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.03
+      value: -0.21
       objectReference: {fileID: 0}
     - target: {fileID: 6951547278497518555, guid: 422435f68a3f26845813dc536054f859, type: 3}
       propertyPath: m_LocalPosition.z
@@ -16920,4 +16919,4 @@ SceneRoots:
   - {fileID: 1251297983}
   - {fileID: 328184325}
   - {fileID: 3324388045794739136}
-  - {fileID: 1623379710}
+  - {fileID: 1601948411}

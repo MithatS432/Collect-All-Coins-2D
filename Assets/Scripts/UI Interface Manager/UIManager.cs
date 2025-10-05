@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Collections; // Bunu eklemeyi unutma!
 
 public class UIManager : MonoBehaviour
 {
@@ -12,6 +13,9 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI coinsDoneText;
     public TextMeshProUGUI leftArrowsText;
     public Image healthBar;
+
+    [Header("Pause Menu")]
+    public GameObject pauseMenuCanvas;
 
     void Awake()
     {
@@ -26,6 +30,9 @@ public class UIManager : MonoBehaviour
             instance = this;
             DontDestroyOnLoad(gameObject);
             SceneManager.activeSceneChanged += OnSceneChanged;
+            
+            if (pauseMenuCanvas != null)
+                pauseMenuCanvas.SetActive(false);
         }
         else
         {
@@ -38,36 +45,71 @@ public class UIManager : MonoBehaviour
         if (newScene.name == "MainMenu")
         {
             Destroy(gameObject);
+            return;
+        }
+        FindPauseMenuInScene();
+    }
+
+    private void FindPauseMenuInScene()
+    {
+        pauseMenuCanvas = GameObject.Find("PauseMenuCanvas");
+        if (pauseMenuCanvas != null)
+            pauseMenuCanvas.SetActive(false);
+    }
+
+    public void ShowPauseMenu()
+    {
+        if (pauseMenuCanvas == null)
+            FindPauseMenuInScene();
+
+        if (pauseMenuCanvas != null)
+            pauseMenuCanvas.SetActive(true);
+    }
+
+    public void HidePauseMenu()
+    {
+        if (pauseMenuCanvas != null)
+            pauseMenuCanvas.SetActive(false);
+    }
+
+    // COINS İLE İLGİLİ METODLARI EKLE:
+    public void UpdateCoins(int coinsLeft)
+    {
+        if (leftCoinsText != null)
+            leftCoinsText.text = "Coins Left: " + coinsLeft;
+        
+        if (coinsLeft <= 0 && coinsDoneText != null)
+        {
+            coinsDoneText.gameObject.SetActive(true);
+            if (leftCoinsText != null) 
+                leftCoinsText.gameObject.SetActive(false);
         }
     }
 
-    public void UpdateCoins(int coinsLeft)
+    // BU METODU EKLE:
+    public void HideCoinsDoneText(float delay)
     {
-        leftCoinsText.text = "Coins Left: " + coinsLeft;
-        if (coinsLeft <= 0)
-        {
-            coinsDoneText.gameObject.SetActive(true);
-            leftCoinsText.gameObject.SetActive(false);
-        }
+        StartCoroutine(HideCoinsTextAfterDelay(delay));
+    }
+
+    // COROUTINE METODU:
+    private IEnumerator HideCoinsTextAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        if (coinsDoneText != null)
+            coinsDoneText.gameObject.SetActive(false);
     }
 
     public void UpdateArrows(int arrowsLeft)
     {
-        leftArrowsText.text = arrowsLeft > 0 ? "Arrows Left: " + arrowsLeft : "None";
+        if (leftArrowsText != null)
+            leftArrowsText.text = arrowsLeft > 0 ? "Arrows Left: " + arrowsLeft : "None";
     }
 
     public void UpdateHealth(float fillAmount)
     {
-        healthBar.fillAmount = fillAmount;
-    }
-
-    public void HideCoinsDoneText(float delay)
-    {
-        Invoke(nameof(HideCoinsText), delay);
-    }
-
-    private void HideCoinsText()
-    {
-        coinsDoneText.gameObject.SetActive(false);
+        if (healthBar != null)
+            healthBar.fillAmount = fillAmount;
     }
 }
