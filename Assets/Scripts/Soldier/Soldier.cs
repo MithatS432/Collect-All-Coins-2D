@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using TMPro;
 
 public class Soldier : MonoBehaviour
 {
@@ -33,28 +35,16 @@ public class Soldier : MonoBehaviour
     private SwordAttack swordAttack;
     private int attackIndex = 0;
 
-    void Awake()
-    {
-        if (SceneManager.GetActiveScene().name == "MainMenu")
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        DontDestroyOnLoad(gameObject);
-
-        SceneManager.activeSceneChanged += OnSceneChanged;
-    }
-    private void OnSceneChanged(Scene oldScene, Scene newScene)
-    {
-        if (newScene.name == "MainMenu")
-        {
-            Destroy(gameObject);
-        }
-    }
+    [Header("UI")]
+    public GameObject coinsLeftUI;
+    public GameObject coinsDoneUI;
+    public GameObject arrowLeftUI;
+    public GameObject healthUI;
+    public GameObject backmenuUI;
 
     void Start()
     {
+        //PlayerPrefs.DeleteAll();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
@@ -63,12 +53,9 @@ public class Soldier : MonoBehaviour
         currentHealth = PlayerPrefs.HasKey("Health") ? PlayerPrefs.GetInt("Health") : maxHealth;
         startArrows = PlayerPrefs.HasKey("Arrows") ? PlayerPrefs.GetInt("Arrows") : startArrows;
 
-        if (UIManager.instance != null)
-        {
-            UIManager.instance.UpdateArrows(startArrows);
-            UIManager.instance.UpdateCoins(startCoins);
-            UIManager.instance.UpdateHealth((float)currentHealth / maxHealth);
-        }
+        SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows.ToString());
+        SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins.ToString());
+        UpdateHealthUI();
 
         for (int i = 0; i < poolSize; i++)
         {
@@ -77,7 +64,6 @@ public class Soldier : MonoBehaviour
             arrowPool.Add(arrow);
         }
     }
-
 
     void Update()
     {
@@ -122,8 +108,17 @@ public class Soldier : MonoBehaviour
     {
         startArrows--;
         PlayerPrefs.SetInt("Arrows", startArrows);
-        UIManager.instance.UpdateArrows(startArrows);
-        if (startArrows <= 0) isArrowLeft = false;
+        PlayerPrefs.Save();
+
+        if (startArrows <= 0)
+        {
+            isArrowLeft = false;
+            SetTextSafely(arrowLeftUI, "NONE");
+        }
+        else
+        {
+            SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows.ToString());
+        }
 
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
         anim.SetTrigger("BowAttack");
@@ -150,7 +145,6 @@ public class Soldier : MonoBehaviour
         return null;
     }
 
-
     public void AddArrowsToPool(int amount)
     {
         for (int i = 0; i < amount; i++)
@@ -159,18 +153,22 @@ public class Soldier : MonoBehaviour
             arrow.SetActive(false);
             arrowPool.Add(arrow);
         }
+
         startArrows += amount;
         isArrowLeft = true;
         PlayerPrefs.SetInt("Arrows", startArrows);
-        UIManager.instance.UpdateArrows(startArrows);
+        PlayerPrefs.Save();
+
+        SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows.ToString());
     }
 
     public void GetDamage(int damage)
     {
         currentHealth -= damage;
         PlayerPrefs.SetInt("Health", currentHealth);
-        UIManager.instance.UpdateHealth((float)currentHealth / maxHealth);
+        PlayerPrefs.Save();
 
+        UpdateHealthUI();
         AudioSource.PlayClipAtPoint(hurtSound, transform.position);
         anim.SetTrigger("Hurt");
 
@@ -180,6 +178,12 @@ public class Soldier : MonoBehaviour
             anim.SetTrigger("Die");
             Invoke(nameof(Die), 1.5f);
         }
+    }
+
+    public void UpdateHealthUI()
+    {
+        float healthPercent = (float)currentHealth / maxHealth;
+        healthUI.GetComponent<UnityEngine.UI.Image>().fillAmount = healthPercent;
     }
 
     private void Die()
@@ -196,12 +200,13 @@ public class Soldier : MonoBehaviour
             AudioSource.PlayClipAtPoint(coinSound, transform.position);
             Destroy(other.gameObject);
             startCoins--;
-            UIManager.instance.UpdateCoins(startCoins);
+            SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins.ToString());
 
             if (startCoins <= 0)
             {
                 isFinished = true;
-                UIManager.instance.HideCoinsDoneText(2f);
+                coinsDoneUI.SetActive(true);
+                Invoke(nameof(CoinsDone), 1f);
             }
         }
 
@@ -209,6 +214,46 @@ public class Soldier : MonoBehaviour
         {
             Destroy(other.gameObject);
             AddArrowsToPool(5);
+        }
+    }
+    void CoinsDone()
+    {
+        coinsDoneUI.SetActive(false);
+    }
+    public void BackToMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    private void SetTextSafely(GameObject target, string text)
+    {
+        if (target == null) return;
+
+        var tmp = target.GetComponent<TMP_Text>();
+        if (tmp != null)
+        {
+            tmp.text = text;
+            return;
+        }
+
+        var uiText = target.GetComponent<Text>();
+        if (uiText != null)
+        {
+            uiText.text = text;
+            return;
+        }
+
+        tmp = target.GetComponentInChildren<TMP_Text>();
+        if (tmp != null)
+        {
+            tmp.text = text;
+            return;
+        }
+
+        uiText = target.GetComponentInChildren<Text>();
+        if (uiText != null)
+        {
+            uiText.text = text;
         }
     }
 
@@ -222,6 +267,7 @@ public class Soldier : MonoBehaviour
 
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
+
         if (other.gameObject.CompareTag("Ground"))
             isGrounded = true;
     }
