@@ -55,7 +55,6 @@ public class Soldier : MonoBehaviour
 
     void Start()
     {
-        PlayerPrefs.DeleteAll();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
@@ -64,9 +63,12 @@ public class Soldier : MonoBehaviour
         currentHealth = PlayerPrefs.HasKey("Health") ? PlayerPrefs.GetInt("Health") : maxHealth;
         startArrows = PlayerPrefs.HasKey("Arrows") ? PlayerPrefs.GetInt("Arrows") : startArrows;
 
-        UIManager.instance.UpdateArrows(startArrows);
-        UIManager.instance.UpdateCoins(startCoins);
-        UIManager.instance.UpdateHealth((float)currentHealth / maxHealth);
+        if (UIManager.instance != null)
+        {
+            UIManager.instance.UpdateArrows(startArrows);
+            UIManager.instance.UpdateCoins(startCoins);
+            UIManager.instance.UpdateHealth((float)currentHealth / maxHealth);
+        }
 
         for (int i = 0; i < poolSize; i++)
         {
@@ -75,6 +77,7 @@ public class Soldier : MonoBehaviour
             arrowPool.Add(arrow);
         }
     }
+
 
     void Update()
     {

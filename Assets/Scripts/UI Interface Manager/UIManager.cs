@@ -1,8 +1,8 @@
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
+using TMPro;
 using UnityEngine.SceneManagement;
-using System.Collections; // Bunu eklemeyi unutma!
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -12,6 +12,8 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI leftCoinsText;
     public TextMeshProUGUI coinsDoneText;
     public TextMeshProUGUI leftArrowsText;
+    public Button continueButton;
+    public Button mainMenuButton;
     public Image healthBar;
 
     [Header("Pause Menu")]
@@ -19,86 +21,110 @@ public class UIManager : MonoBehaviour
 
     void Awake()
     {
-        if (SceneManager.GetActiveScene().name == "MainMenu")
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         if (instance == null)
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
-            SceneManager.activeSceneChanged += OnSceneChanged;
-            
-            if (pauseMenuCanvas != null)
-                pauseMenuCanvas.SetActive(false);
         }
-        else
+        else if (instance != this)
         {
             Destroy(gameObject);
         }
+    }
+
+    void OnEnable()
+    {
+        SceneManager.activeSceneChanged += OnSceneChanged;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.activeSceneChanged -= OnSceneChanged;
     }
 
     private void OnSceneChanged(Scene oldScene, Scene newScene)
     {
+        // Pause menü veya UI sadece oyun sahnelerinde aktif olsun
         if (newScene.name == "MainMenu")
         {
-            Destroy(gameObject);
-            return;
+            if (pauseMenuCanvas != null) pauseMenuCanvas.SetActive(false);
+            gameObject.SetActive(false); // UIManager MainMenu’de gözükmesin
+            Time.timeScale = 1f; // Oyun hızını resetle
         }
-        FindPauseMenuInScene();
+        else
+        {
+            gameObject.SetActive(true);
+            Time.timeScale = 1f; 
+            FindPauseMenuInScene();
+        }
     }
 
     private void FindPauseMenuInScene()
     {
-        pauseMenuCanvas = GameObject.Find("PauseMenuCanvas");
-        if (pauseMenuCanvas != null)
-            pauseMenuCanvas.SetActive(false);
-    }
-
-    public void ShowPauseMenu()
-    {
         if (pauseMenuCanvas == null)
-            FindPauseMenuInScene();
+            pauseMenuCanvas = GameObject.Find("PauseMenuCanvas");
 
         if (pauseMenuCanvas != null)
-            pauseMenuCanvas.SetActive(true);
-    }
-
-    public void HidePauseMenu()
-    {
-        if (pauseMenuCanvas != null)
-            pauseMenuCanvas.SetActive(false);
-    }
-
-    // COINS İLE İLGİLİ METODLARI EKLE:
-    public void UpdateCoins(int coinsLeft)
-    {
-        if (leftCoinsText != null)
-            leftCoinsText.text = "Coins Left: " + coinsLeft;
-        
-        if (coinsLeft <= 0 && coinsDoneText != null)
         {
-            coinsDoneText.gameObject.SetActive(true);
-            if (leftCoinsText != null) 
-                leftCoinsText.gameObject.SetActive(false);
+            pauseMenuCanvas.SetActive(false);
+            SetupButtonEvents();
         }
     }
 
-    // BU METODU EKLE:
-    public void HideCoinsDoneText(float delay)
+    private void SetupButtonEvents()
     {
-        StartCoroutine(HideCoinsTextAfterDelay(delay));
+        if (pauseMenuCanvas == null) return;
+
+        Button continueBtn = pauseMenuCanvas.transform.Find("ContinueButton")?.GetComponent<Button>();
+        if (continueBtn != null)
+        {
+            continueBtn.onClick.RemoveAllListeners();
+            continueBtn.onClick.AddListener(ContinueGame);
+        }
+
+        Button mainMenuBtn = pauseMenuCanvas.transform.Find("MainMenuButton")?.GetComponent<Button>();
+        if (mainMenuBtn != null)
+        {
+            mainMenuBtn.onClick.RemoveAllListeners();
+            mainMenuBtn.onClick.AddListener(BackMainMenu);
+        }
     }
 
-    // COROUTINE METODU:
+    public void PauseGame()
+    {
+        Time.timeScale = 0f;
+        if (pauseMenuCanvas != null) pauseMenuCanvas.SetActive(true);
+    }
+
+    public void ContinueGame()
+    {
+        Time.timeScale = 1f;
+        if (pauseMenuCanvas != null) pauseMenuCanvas.SetActive(false);
+    }
+
+    public void BackMainMenu()
+    {
+        Time.timeScale = 1f;
+        if (pauseMenuCanvas != null) pauseMenuCanvas.SetActive(false);
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    public void UpdateCoins(int coinsLeft)
+    {
+        if (leftCoinsText != null) leftCoinsText.text = "Coins Left: " + coinsLeft;
+        if (coinsLeft <= 0 && coinsDoneText != null)
+        {
+            coinsDoneText.gameObject.SetActive(true);
+            if (leftCoinsText != null) leftCoinsText.gameObject.SetActive(false);
+        }
+    }
+
+    public void HideCoinsDoneText(float delay) => StartCoroutine(HideCoinsTextAfterDelay(delay));
+
     private IEnumerator HideCoinsTextAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
-        if (coinsDoneText != null)
-            coinsDoneText.gameObject.SetActive(false);
+        if (coinsDoneText != null) coinsDoneText.gameObject.SetActive(false);
     }
 
     public void UpdateArrows(int arrowsLeft)
