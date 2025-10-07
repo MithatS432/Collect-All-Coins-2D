@@ -1,26 +1,25 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
-    public static UIManager instance;
+    public static UIManager Instance;
 
-    [Header("Header UI Elements")]
-    public TextMeshProUGUI coinsLeftText;
-    public TextMeshProUGUI arrowsLeftText;
-    public Image healthBar;
-    public GameObject coinsDoneUI;
-    public GameObject backMenuUI;
+    [Header("UI References - Inspector'dan ata")]
+    public TMP_Text coinsLeftText;
+    public TMP_Text coinsDoneText;
+    public TMP_Text arrowsLeftText;
+    public Image healthBarImage;
 
-    private void Awake()
+    void Awake()
     {
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
-            SceneManager.activeSceneChanged += OnSceneChanged;
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
@@ -28,67 +27,75 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        HandleVisibility();
-    }
-
-    private void OnSceneChanged(Scene oldScene, Scene newScene)
-    {
-        HandleVisibility();
-    }
-
-    private void HandleVisibility()
-    {
-        if (SceneManager.GetActiveScene().name == "MainMenu")
+        if (scene.name != "MainMenu")
         {
-            gameObject.SetActive(false);
-        }
-        else
-        {
-            gameObject.SetActive(true);
+            FindUIElements();
+
+            // Soldier'ı bul ve UI'yı güncelle
+            Soldier player = FindAnyObjectByType<Soldier>(); // Güncellenmiş metod
+            if (player != null)
+            {
+                player.ForceUIUpdate(); // Bu metodu Soldier'a ekleyeceğiz
+            }
         }
     }
 
+    private void FindUIElements()
+    {
+        GameObject coinsLeftObj = GameObject.Find("CoinsLeftUI");
+        GameObject coinsDoneObj = GameObject.Find("CoinsDoneUI");
+        GameObject arrowsLeftObj = GameObject.Find("ArrowLeftUI");
+        GameObject healthBarObj = GameObject.Find("HealthUI");
+
+        if (coinsLeftObj != null) coinsLeftText = coinsLeftObj.GetComponent<TMP_Text>();
+        if (coinsDoneObj != null) coinsDoneText = coinsDoneObj.GetComponent<TMP_Text>();
+        if (arrowsLeftObj != null) arrowsLeftText = arrowsLeftObj.GetComponent<TMP_Text>();
+        if (healthBarObj != null) healthBarImage = healthBarObj.GetComponent<Image>();
+
+        Debug.Log("UI Elements Found - Coins: " + (coinsLeftText != null) +
+                 ", Arrows: " + (arrowsLeftText != null) +
+                 ", Health: " + (healthBarImage != null));
+    }
 
     public void UpdateCoins(int coins)
     {
         if (coinsLeftText != null)
-            coinsLeftText.text = "Coins Left: " + coins.ToString();
-
-        if (coins <= 0 && coinsDoneUI != null)
         {
-            coinsDoneUI.SetActive(true);
-            Invoke(nameof(HideCoinsDoneUI), 1f);
+            coinsLeftText.text = "Coins Left: " + coins;
+            Debug.Log("Coins UI Updated: " + coins);
         }
-        else if (coinsDoneUI != null)
-            coinsDoneUI.SetActive(false);
-    }
-    private void HideCoinsDoneUI()
-    {
-        if (coinsDoneUI != null)
-            coinsDoneUI.SetActive(false);
+
+        if (coinsDoneText != null)
+        {
+            coinsDoneText.gameObject.SetActive(coins <= 0);
+        }
     }
 
     public void UpdateArrows(int arrows)
     {
         if (arrowsLeftText != null)
-            arrowsLeftText.text = arrows > 0 ? "Arrows Left: " + arrows.ToString() : "NONE";
+        {
+            if (arrows <= 0)
+                arrowsLeftText.text = "NONE";
+            else
+                arrowsLeftText.text = "Arrows Left: " + arrows;
+
+            Debug.Log("Arrows UI Updated: " + arrows);
+        }
     }
 
-    public void UpdateHealth(float currentHealth, float maxHealth)
+    public void UpdateHealth(float healthPercent)
     {
-        if (healthBar != null)
-            healthBar.fillAmount = currentHealth / maxHealth;
+        if (healthBarImage != null)
+        {
+            healthBarImage.fillAmount = healthPercent;
+            Debug.Log("Health UI Updated: " + healthPercent);
+        }
     }
-    public void BackMainMenu()
+    public void BackToMainMenu()
     {
-        Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
-    }
-    public void ShowBackMenu(bool show)
-    {
-        if (backMenuUI != null)
-            backMenuUI.SetActive(show);
     }
 }

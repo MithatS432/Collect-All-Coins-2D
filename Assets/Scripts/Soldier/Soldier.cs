@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
-using UnityEngine.UI;
-using TMPro;
 
 public class Soldier : MonoBehaviour
 {
@@ -12,21 +10,21 @@ public class Soldier : MonoBehaviour
     private SpriteRenderer sprite;
     public AudioClip attackSound, hurtSound, deathSound, coinSound, jumpSound;
 
-    [Header("State")]
+    [Header("Game Stats")]
+    public int currentHealth = 200;
+    public int startCoins = 10;
+    public int startArrows = 10;
+    private int maxHealth = 200;
+    private bool isArrowLeft = true;
+    public bool isFinished;
     public bool isGrounded;
+
+    [Header("Settings")]
     private float speed = 5f;
     private float jumpForce = 7f;
     private float xRange = -10f;
 
-    [Header("Gameplay")]
-    [SerializeField] private int startCoins = 10;
-    [SerializeField] private int startArrows = 10;
-    public int currentHealth;
-    private int maxHealth = 200;
-    private bool isArrowLeft = true;
-    public bool isFinished;
-
-    [Header("Arrow")]
+    [Header("Arrow System")]
     public GameObject arrowPrefab;
     public Transform firePoint;
     private List<GameObject> arrowPool = new List<GameObject>();
@@ -35,59 +33,35 @@ public class Soldier : MonoBehaviour
     private SwordAttack swordAttack;
     private int attackIndex = 0;
 
-    [Header("UI")]
-    public GameObject coinsLeftUI;
-    public GameObject coinsDoneUI;
-    public GameObject arrowLeftUI;
-    public GameObject healthUI;
-    public GameObject backmenuUI;
+    private static Soldier instance;
+
+    void Awake()
+    {
+        PlayerPrefs.DeleteAll(); //test amaçlı
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+    }
 
     void Start()
     {
-        PlayerPrefs.DeleteAll();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
         swordAttack = GetComponentInChildren<SwordAttack>();
 
-        currentHealth = PlayerPrefs.GetInt("Health", maxHealth);
-        startArrows = PlayerPrefs.GetInt("Arrows", startArrows);
-
-        int savedCoins = PlayerPrefs.GetInt("Coins", -1);
-        if (savedCoins == -1)
-        {
-            PlayerPrefs.SetInt("Coins", startCoins);
-        }
-        else
-        {
-            startCoins = savedCoins + 5;
-            PlayerPrefs.SetInt("Coins", startCoins);
-        }
-        //PlayerPrefs.Save();
-
-        if (UIManager.instance != null)
-        {
-            UIManager.instance.UpdateArrows(startArrows);
-            UIManager.instance.UpdateCoins(startCoins);
-            UIManager.instance.UpdateHealth(currentHealth, maxHealth);
-        }
-        else
-        {
-            if (healthUI != null) UpdateHealthUI();
-            SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows);
-            SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins);
-        }
-
-        SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows.ToString());
-        SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins.ToString());
-        UpdateHealthUI();
-
-        for (int i = 0; i < poolSize; i++)
-        {
-            GameObject arrow = Instantiate(arrowPrefab);
-            arrow.SetActive(false);
-            arrowPool.Add(arrow);
-        }
+        LoadPlayerData();
+        CreateArrowPool();
+        ForceUIUpdate();
     }
 
     void Update()
@@ -103,11 +77,26 @@ public class Soldier : MonoBehaviour
         transform.position += new Vector3(x, 0, 0) * Time.fixedDeltaTime * speed;
         anim.SetFloat("Speed", Mathf.Abs(x));
 
-        if (x < 0) sprite.flipX = true;
-        else if (x > 0) sprite.flipX = false;
+        sprite.flipX = x < 0;
 
         if (transform.position.x < xRange)
             transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
+    }
+
+    // 🎯 BU METODU EKLE - UI GÜNCELLEME
+    public void ForceUIUpdate()
+    {
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateCoins(startCoins);
+            UIManager.Instance.UpdateArrows(startArrows);
+            UIManager.Instance.UpdateHealth((float)currentHealth / maxHealth);
+            Debug.Log("ForceUIUpdate called!");
+        }
+        else
+        {
+            Debug.LogError("UIManager.Instance is null!");
+        }
     }
 
     void Jump()
@@ -120,9 +109,7 @@ public class Soldier : MonoBehaviour
     void Attack()
     {
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
-        attackIndex++;
-        if (attackIndex > 2) attackIndex = 1;
-
+        attackIndex = (attackIndex % 2) + 1;
         anim.SetInteger("AttackIndex", attackIndex);
         anim.SetTrigger("Attack");
 
@@ -135,15 +122,11 @@ public class Soldier : MonoBehaviour
         PlayerPrefs.SetInt("Arrows", startArrows);
         PlayerPrefs.Save();
 
-        if (startArrows <= 0)
-        {
-            isArrowLeft = false;
-            SetTextSafely(arrowLeftUI, "NONE");
-        }
-        else
-        {
-            SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows.ToString());
-        }
+        // UI'YI HEMEN GÜNCELLE
+        if (UIManager.Instance != null)
+            UIManager.Instance.UpdateArrows(startArrows);
+
+        if (startArrows <= 0) isArrowLeft = false;
 
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
         anim.SetTrigger("BowAttack");
@@ -184,7 +167,9 @@ public class Soldier : MonoBehaviour
         PlayerPrefs.SetInt("Arrows", startArrows);
         PlayerPrefs.Save();
 
-        SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows.ToString());
+        // UI'YI HEMEN GÜNCELLE
+        if (UIManager.Instance != null)
+            UIManager.Instance.UpdateArrows(startArrows);
     }
 
     public void GetDamage(int damage)
@@ -193,7 +178,10 @@ public class Soldier : MonoBehaviour
         PlayerPrefs.SetInt("Health", currentHealth);
         PlayerPrefs.Save();
 
-        UpdateHealthUI();
+        // UI'YI HEMEN GÜNCELLE
+        if (UIManager.Instance != null)
+            UIManager.Instance.UpdateHealth((float)currentHealth / maxHealth);
+
         AudioSource.PlayClipAtPoint(hurtSound, transform.position);
         anim.SetTrigger("Hurt");
 
@@ -205,16 +193,11 @@ public class Soldier : MonoBehaviour
         }
     }
 
-    public void UpdateHealthUI()
-    {
-        float healthPercent = (float)currentHealth / maxHealth;
-        healthUI.GetComponent<UnityEngine.UI.Image>().fillAmount = healthPercent;
-    }
-
     private void Die()
     {
         PlayerPrefs.DeleteKey("Health");
         PlayerPrefs.DeleteKey("Arrows");
+        PlayerPrefs.DeleteKey("Coins");
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
@@ -228,13 +211,14 @@ public class Soldier : MonoBehaviour
             PlayerPrefs.SetInt("Coins", startCoins);
             PlayerPrefs.Save();
 
-            SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins.ToString());
+            // UI'YI HEMEN GÜNCELLE
+            if (UIManager.Instance != null)
+                UIManager.Instance.UpdateCoins(startCoins);
 
             if (startCoins <= 0)
             {
                 isFinished = true;
-                coinsDoneUI.SetActive(true);
-                Invoke(nameof(CoinsDone), 1f);
+                ShowCoinsCollectedText();
             }
         }
 
@@ -244,48 +228,88 @@ public class Soldier : MonoBehaviour
             AddArrowsToPool(5);
         }
     }
-
-    void CoinsDone()
+    private void ShowCoinsCollectedText()
     {
-        coinsDoneUI.SetActive(false);
+        if (UIManager.Instance != null && UIManager.Instance.coinsDoneText != null)
+        {
+            UIManager.Instance.coinsDoneText.text = "COINS COLLECTED!";
+            UIManager.Instance.coinsDoneText.gameObject.SetActive(true);
+            Invoke(nameof(HideCoinsCollectedText), 1f); // 1 saniye sonra gizle
+        }
     }
 
-    public void BackToMenu()
+    private void HideCoinsCollectedText()
     {
-        PlayerPrefs.DeleteAll();
-        SceneManager.LoadScene("MainMenu");
-    }
-
-    private void SetTextSafely(GameObject target, string text)
-    {
-        if (target == null) return;
-
-        var tmp = target.GetComponent<TMP_Text>();
-        if (tmp != null) { tmp.text = text; return; }
-
-        var uiText = target.GetComponent<Text>();
-        if (uiText != null) { uiText.text = text; return; }
-
-        tmp = target.GetComponentInChildren<TMP_Text>();
-        if (tmp != null) { tmp.text = text; return; }
-
-        uiText = target.GetComponentInChildren<Text>();
-        if (uiText != null) { uiText.text = text; }
+        if (UIManager.Instance != null && UIManager.Instance.coinsDoneText != null)
+        {
+            UIManager.Instance.coinsDoneText.gameObject.SetActive(false);
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D other)
     {
         if (other.gameObject.CompareTag("Flag") && isFinished)
         {
-            PlayerPrefs.SetInt("Health", currentHealth);
-            PlayerPrefs.SetInt("Arrows", startArrows);
-            PlayerPrefs.SetInt("Coins", startCoins);
-            PlayerPrefs.Save();
-
+            SavePlayerData();
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
 
         if (other.gameObject.CompareTag("Ground"))
             isGrounded = true;
+
+        if (other.gameObject.CompareTag("Space"))
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "MainMenu")
+        {
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            gameObject.SetActive(true);
+            LoadPlayerData();
+            ForceUIUpdate();
+
+            transform.position = Vector3.zero;
+
+            isFinished = false;
+            isGrounded = false;
+        }
+        CameraFollow cam = Camera.main.GetComponent<CameraFollow>();
+        if (cam != null)
+            cam.target = this.transform;
+    }
+
+    private void LoadPlayerData()
+    {
+        currentHealth = PlayerPrefs.GetInt("Health", maxHealth);
+        startArrows = PlayerPrefs.GetInt("Arrows", startArrows);
+        startCoins = PlayerPrefs.GetInt("Coins", startCoins);
+    }
+
+    private void SavePlayerData()
+    {
+        PlayerPrefs.SetInt("Health", currentHealth);
+        PlayerPrefs.SetInt("Arrows", startArrows);
+        PlayerPrefs.SetInt("Coins", startCoins);
+        PlayerPrefs.Save();
+    }
+
+    private void CreateArrowPool()
+    {
+        for (int i = 0; i < poolSize; i++)
+        {
+            GameObject arrow = Instantiate(arrowPrefab);
+            arrow.SetActive(false);
+            arrowPool.Add(arrow);
+        }
+    }
+
+    void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }

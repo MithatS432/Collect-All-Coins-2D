@@ -876,10 +876,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   coinsLeftText: {fileID: 1804877645}
+  coinsDoneText: {fileID: 1098689098}
   arrowsLeftText: {fileID: 1856497685}
-  healthBar: {fileID: 2133028181}
-  coinsDoneUI: {fileID: 1098689096}
-  backMenuUI: {fileID: 711236972}
+  healthBarImage: {fileID: 2133028181}
 --- !u!4 &331848436
 Transform:
   m_ObjectHideFlags: 0
@@ -1305,7 +1304,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 331848435}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: BackMainMenu
+        m_MethodName: BackToMainMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1505,7 +1504,7 @@ GameObject:
   - component: {fileID: 1098689099}
   - component: {fileID: 1098689098}
   m_Layer: 5
-  m_Name: CoinsCollected
+  m_Name: 'CoinsDoneUI '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2169,7 +2168,7 @@ GameObject:
   - component: {fileID: 1804877646}
   - component: {fileID: 1804877645}
   m_Layer: 5
-  m_Name: Coins Left
+  m_Name: 'CoinsLeftUI '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2305,7 +2304,7 @@ GameObject:
   - component: {fileID: 1856497686}
   - component: {fileID: 1856497685}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: 'ArrowLeftUI '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16020,7 +16019,7 @@ GameObject:
   - component: {fileID: 2133028182}
   - component: {fileID: 2133028181}
   m_Layer: 5
-  m_Name: SoldierHealthBar
+  m_Name: 'HealthUI '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16233,14 +16232,6 @@ PrefabInstance:
       propertyPath: player
       value: 
       objectReference: {fileID: 103751202}
-    - target: {fileID: 2777428357481472523, guid: 452b7063e59e38d40a4dac50077e6751, type: 3}
-      propertyPath: healthBarRect
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 2777428357481472523, guid: 452b7063e59e38d40a4dac50077e6751, type: 3}
-      propertyPath: healthBarImage
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 7555230609067488365, guid: 452b7063e59e38d40a4dac50077e6751, type: 3}
       propertyPath: m_LocalPosition.x
       value: 19.89

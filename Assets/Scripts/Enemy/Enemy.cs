@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 public class Enemy : MonoBehaviour
 {
@@ -8,58 +7,75 @@ public class Enemy : MonoBehaviour
     private Animator anim;
 
     [Header("Stats")]
-    private float maxHealth = 50f;
+    [SerializeField] private float maxHealth = 50f;
     private float currentHealth;
-    private float moveSpeed = 2f;
+    [SerializeField] private float moveSpeed = 2f;
     private bool isAlive = true;
-    private bool isDead = false;
     public GameObject player;
     private Vector3 originalScale;
-    private float attackRange = 1.5f;
+    [SerializeField] private float attackRange = 1.5f;
     public EnemyAxeAttack enemyaxe;
-    private float attackCooldown = 1f;
+    [SerializeField] private float attackCooldown = 1f;
     private float lastAttackTime;
-    private float viewDistance = 7f;
+    [SerializeField] private float viewDistance = 7f;
 
-
-
-    [Header("UI")]
-    public Image healthBarImage;
-    public RectTransform healthBarRect;
-    public Vector3 offset = new Vector3(0, 2f, 0);
-
-
-    void Start()
+    void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         currentHealth = maxHealth;
         originalScale = transform.localScale;
-        if (anim == null)
-            anim = GetComponent<Animator>() ?? GetComponentInParent<Animator>();
+
+        // Rigidbody ayarlarını yap
+        SetupRigidbody();
     }
 
-    void LateUpdate()
+    void Start()
     {
-        if (isDead || healthBarRect == null) return;
-
-        try
+        if (player == null)
         {
-            Vector3 screenPoint = Camera.main.WorldToScreenPoint(transform.position + offset);
-            healthBarRect.position = screenPoint;
-        }
-        catch
-        {
-            if (healthBarRect != null)
-                Destroy(healthBarRect.gameObject);
+            player = GameObject.FindWithTag("Player");
         }
     }
-    private void Update()
+
+    // YENİ METOD: RIGIDBODY AYARLARI
+    private void SetupRigidbody()
     {
+        if (rb != null)
+        {
+            rb.gravityScale = 3f; // Yerçekimi - düşmemesi için normal değer
+            rb.freezeRotation = true; // Rotasyonu kilitle
+            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; // Daha iyi çarpışma
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (!isAlive || player == null) return;
+
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
         Vector3 direction = (player.transform.position - transform.position).normalized;
 
-        if (distanceToPlayer < attackRange && Time.time - lastAttackTime > attackCooldown)
+        if (distanceToPlayer > attackRange && distanceToPlayer < viewDistance)
+        {
+            // Yatay hareket - dikey hareketi etkilemesin
+            rb.linearVelocity = new Vector2(direction.x * moveSpeed, rb.linearVelocity.y);
+            anim.SetFloat("SpeedE", Mathf.Abs(rb.linearVelocity.x));
+
+            // Yön değiştirme
+            Vector3 scale = originalScale;
+            scale.x = Mathf.Sign(direction.x) * Mathf.Abs(originalScale.x);
+            transform.localScale = scale;
+        }
+        else
+        {
+            // Sadece yatay hızı sıfırla, dikey hızı koru (yerçekimi için)
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            anim.SetFloat("SpeedE", 0f);
+        }
+
+        // Saldırı
+        if (distanceToPlayer <= attackRange && Time.time - lastAttackTime > attackCooldown)
         {
             anim.SetTrigger("AttackE");
             if (enemyaxe != null)
@@ -68,26 +84,7 @@ public class Enemy : MonoBehaviour
             }
             lastAttackTime = Time.time;
         }
-
-        if (isAlive && distanceToPlayer > 1f && distanceToPlayer < viewDistance)
-        {
-
-            rb.linearVelocity = new Vector2(direction.x * moveSpeed, rb.linearVelocity.y);
-            anim.SetFloat("SpeedE", Mathf.Abs(rb.linearVelocity.x));
-
-            if (direction.x > 0)
-                transform.localScale = new Vector3(Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
-            else
-                transform.localScale = new Vector3(-Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
-
-        }
-        else
-        {
-            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-            anim.SetFloat("SpeedE", 0f);
-        }
     }
-
 
     public void GetDamage(float damageAmount)
     {
@@ -95,7 +92,6 @@ public class Enemy : MonoBehaviour
 
         currentHealth -= damageAmount;
         anim.SetTrigger("Hurt");
-        UpdateHealthBar();
 
         if (currentHealth <= 0)
         {
@@ -103,26 +99,61 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void UpdateHealthBar()
-    {
-        if (healthBarImage != null)
-        {
-            healthBarImage.fillAmount = currentHealth / maxHealth;
-        }
-    }
-
     private void Die()
     {
+        if (!isAlive) return;
+
         isAlive = false;
-        isDead = true;
         anim.SetTrigger("Die");
 
-        if (healthBarRect != null)
+        // 🚨 ÖNEMLİ: Tüm fizik işlemlerini durdur
+        if (rb != null)
         {
-            Destroy(healthBarRect.gameObject);
-            healthBarRect = null;
+            rb.linearVelocity = Vector2.zero;
+            rb.gravityScale = 0f; // Yerçekimini kapat
+            rb.bodyType = RigidbodyType2D.Kinematic; // Fizik etkileşimini durdur (isKinematic yerine)
         }
 
-        Destroy(gameObject, 1f);
+        // Collider'ı devre dışı bırak
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null) col.enabled = false;
+
+        // Diğer collider'ları da devre dışı bırak
+        Collider2D[] allColliders = GetComponentsInChildren<Collider2D>();
+        foreach (Collider2D collider in allColliders)
+        {
+            collider.enabled = false;
+        }
+
+        Destroy(gameObject, 2f);
+    }
+
+    // Alternatif: Enemy ölünce sabit kalsın istiyorsan
+    private void DieFixedPosition()
+    {
+        if (!isAlive) return;
+
+        isAlive = false;
+        anim.SetTrigger("Die");
+
+        // Hareketi tamamen durdur
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.gravityScale = 0f;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+        }
+
+        // Collider'ları kapat
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+        foreach (Collider2D col in colliders)
+        {
+            col.enabled = false;
+        }
+
+        // Mevcut pozisyonda sabit kal
+        transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+
+        Destroy(gameObject, 2f);
     }
 }

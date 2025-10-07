@@ -10,6 +10,7 @@ TagManager:
   - Arrow
   - Enemy
   - ArrowItem
+  - Space
   layers:
   - Default
   - TransparentFX
