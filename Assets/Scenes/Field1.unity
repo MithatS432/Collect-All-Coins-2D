@@ -544,17 +544,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5783500207649650734, guid: df5c4c59f13fd9a4cad691c9f49cb180, type: 3}
   m_PrefabInstance: {fileID: 2218773851659523747}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &103751206 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2663489436319732912, guid: df5c4c59f13fd9a4cad691c9f49cb180, type: 3}
-  m_PrefabInstance: {fileID: 2218773851659523747}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 103751202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c00bc5be5b06c4a97a6f1cc2ffdffc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &105562670
 GameObject:
   m_ObjectHideFlags: 0
@@ -855,6 +844,56 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &331848434
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 331848436}
+  - component: {fileID: 331848435}
+  m_Layer: 0
+  m_Name: UIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &331848435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331848434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 419bda6187887924e95e4d4d8aef856a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  coinsLeftText: {fileID: 1804877645}
+  arrowsLeftText: {fileID: 1856497685}
+  healthBar: {fileID: 2133028181}
+  coinsDoneUI: {fileID: 1098689096}
+  backMenuUI: {fileID: 711236972}
+--- !u!4 &331848436
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331848434}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.514265, y: -1.8512541, z: -9.995566}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 607885332}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &413069425
@@ -1169,7 +1208,7 @@ RectTransform:
   - {fileID: 1098689097}
   - {fileID: 1749207120}
   - {fileID: 711236973}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 331848436}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -1264,9 +1303,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 103751206}
-        m_TargetAssemblyTypeName: Soldier, Assembly-CSharp
-        m_MethodName: BackToMenu
+      - m_Target: {fileID: 331848435}
+        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+        m_MethodName: BackMainMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -16316,4 +16355,4 @@ SceneRoots:
   - {fileID: 2218773851659523747}
   - {fileID: 328184325}
   - {fileID: 3324388045794739136}
-  - {fileID: 607885332}
+  - {fileID: 331848436}

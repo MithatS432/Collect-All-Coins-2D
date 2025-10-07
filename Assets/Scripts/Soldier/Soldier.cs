@@ -44,14 +44,39 @@ public class Soldier : MonoBehaviour
 
     void Start()
     {
-        //PlayerPrefs.DeleteAll();
+        PlayerPrefs.DeleteAll();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
         swordAttack = GetComponentInChildren<SwordAttack>();
 
-        currentHealth = PlayerPrefs.HasKey("Health") ? PlayerPrefs.GetInt("Health") : maxHealth;
-        startArrows = PlayerPrefs.HasKey("Arrows") ? PlayerPrefs.GetInt("Arrows") : startArrows;
+        currentHealth = PlayerPrefs.GetInt("Health", maxHealth);
+        startArrows = PlayerPrefs.GetInt("Arrows", startArrows);
+
+        int savedCoins = PlayerPrefs.GetInt("Coins", -1);
+        if (savedCoins == -1)
+        {
+            PlayerPrefs.SetInt("Coins", startCoins);
+        }
+        else
+        {
+            startCoins = savedCoins + 5;
+            PlayerPrefs.SetInt("Coins", startCoins);
+        }
+        //PlayerPrefs.Save();
+
+        if (UIManager.instance != null)
+        {
+            UIManager.instance.UpdateArrows(startArrows);
+            UIManager.instance.UpdateCoins(startCoins);
+            UIManager.instance.UpdateHealth(currentHealth, maxHealth);
+        }
+        else
+        {
+            if (healthUI != null) UpdateHealthUI();
+            SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows);
+            SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins);
+        }
 
         SetTextSafely(arrowLeftUI, "Arrows Left: " + startArrows.ToString());
         SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins.ToString());
@@ -200,6 +225,9 @@ public class Soldier : MonoBehaviour
             AudioSource.PlayClipAtPoint(coinSound, transform.position);
             Destroy(other.gameObject);
             startCoins--;
+            PlayerPrefs.SetInt("Coins", startCoins);
+            PlayerPrefs.Save();
+
             SetTextSafely(coinsLeftUI, "Coins Left: " + startCoins.ToString());
 
             if (startCoins <= 0)
@@ -216,12 +244,15 @@ public class Soldier : MonoBehaviour
             AddArrowsToPool(5);
         }
     }
+
     void CoinsDone()
     {
         coinsDoneUI.SetActive(false);
     }
+
     public void BackToMenu()
     {
+        PlayerPrefs.DeleteAll();
         SceneManager.LoadScene("MainMenu");
     }
 
@@ -230,31 +261,16 @@ public class Soldier : MonoBehaviour
         if (target == null) return;
 
         var tmp = target.GetComponent<TMP_Text>();
-        if (tmp != null)
-        {
-            tmp.text = text;
-            return;
-        }
+        if (tmp != null) { tmp.text = text; return; }
 
         var uiText = target.GetComponent<Text>();
-        if (uiText != null)
-        {
-            uiText.text = text;
-            return;
-        }
+        if (uiText != null) { uiText.text = text; return; }
 
         tmp = target.GetComponentInChildren<TMP_Text>();
-        if (tmp != null)
-        {
-            tmp.text = text;
-            return;
-        }
+        if (tmp != null) { tmp.text = text; return; }
 
         uiText = target.GetComponentInChildren<Text>();
-        if (uiText != null)
-        {
-            uiText.text = text;
-        }
+        if (uiText != null) { uiText.text = text; }
     }
 
     private void OnCollisionEnter2D(Collision2D other)
@@ -263,6 +279,7 @@ public class Soldier : MonoBehaviour
         {
             PlayerPrefs.SetInt("Health", currentHealth);
             PlayerPrefs.SetInt("Arrows", startArrows);
+            PlayerPrefs.SetInt("Coins", startCoins);
             PlayerPrefs.Save();
 
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
