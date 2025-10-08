@@ -1,38 +1,53 @@
 using UnityEngine;
+using System.Collections;
 
 public class SwordAttack : MonoBehaviour
 {
-    private int attackDamage = 25;
-    private Animator swordAnim;
-    private bool canDealDamage = false;
+    public int attackDamage = 25;
+    public Collider2D swordCollider;
 
     private void Start()
     {
-        swordAnim = GetComponent<Animator>();
+        if (swordCollider != null)
+            swordCollider.enabled = false;
     }
 
-    public void DoSwordAttack()
+    public void StartAttack()
     {
-        swordAnim.SetTrigger("AttackSword");
-        canDealDamage = true;
-
-        Invoke("EndAttack", 0.3f);
+        if (swordCollider != null)
+        {
+            swordCollider.enabled = true;
+            // safety: auto-disable after a short window in case animation event is missing
+            StopAllCoroutines();
+            StartCoroutine(AutoEndAttack(0.25f));
+        }
     }
 
-    private void EndAttack()
+    public void EndAttack()
     {
-        canDealDamage = false;
+        if (swordCollider != null)
+            swordCollider.enabled = false;
+        StopAllCoroutines();
+    }
+
+    private IEnumerator AutoEndAttack(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (swordCollider != null)
+            swordCollider.enabled = false;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (canDealDamage && other.CompareTag("Enemy"))
+        if (swordCollider == null || !swordCollider.enabled) return;
+
+        Enemy enemy = other.GetComponent<Enemy>();
+        if (enemy == null)
+            enemy = other.GetComponentInParent<Enemy>();
+
+        if (enemy != null)
         {
-            Enemy enemy = other.GetComponent<Enemy>();
-            if (enemy != null)
-            {
-                enemy.GetDamage(attackDamage);
-            }
+            enemy.GetDamage(attackDamage);
         }
     }
 }

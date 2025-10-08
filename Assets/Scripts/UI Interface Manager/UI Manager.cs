@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -46,10 +47,36 @@ public class UIManager : MonoBehaviour
 
     private void FindUIElements()
     {
-        coinsLeftText = GameObject.Find("CoinsLeftUI")?.GetComponent<TMP_Text>();
-        coinsDoneText = GameObject.Find("CoinsDoneUI")?.GetComponent<TMP_Text>();
-        arrowsLeftText = GameObject.Find("ArrowLeftUI")?.GetComponent<TMP_Text>();
-        healthBarImage = GameObject.Find("HealthUI")?.GetComponent<Image>();
+        // Tüm alt nesneleri tarar
+        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+        foreach (TMP_Text text in texts)
+        {
+            switch (text.name)
+            {
+                case "CoinsLeftUI":
+                    coinsLeftText = text;
+                    break;
+                case "CoinsDoneUI":
+                    coinsDoneText = text;
+                    break;
+                case "ArrowLeftUI":
+                    arrowsLeftText = text;
+                    break;
+            }
+        }
+
+        Image[] images = GetComponentsInChildren<Image>(true);
+        foreach (Image img in images)
+        {
+            if (img.name == "HealthUI")
+                healthBarImage = img;
+        }
+
+        // Debug log, null kalmadığından emin olmak için
+        Debug.Log("coinsLeftText: " + coinsLeftText);
+        Debug.Log("coinsDoneText: " + coinsDoneText);
+        Debug.Log("arrowsLeftText: " + arrowsLeftText);
+        Debug.Log("healthBarImage: " + healthBarImage);
     }
 
     public void UpdateCoins(int coins)
@@ -58,8 +85,22 @@ public class UIManager : MonoBehaviour
             coinsLeftText.text = "Coins Left: " + coins;
 
         if (coinsDoneText != null)
-            coinsDoneText.gameObject.SetActive(coins <= 0);
+        {
+            bool showDone = coins <= 0;
+            coinsDoneText.gameObject.SetActive(showDone);
+
+            if (showDone)
+                StartCoroutine(HideCoinsDoneAfterDelay(1f)); // 1 saniye sonra gizle
+        }
     }
+
+    private IEnumerator HideCoinsDoneAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (coinsDoneText != null)
+            coinsDoneText.gameObject.SetActive(false);
+    }
+
 
     public void UpdateArrows(int arrows)
     {

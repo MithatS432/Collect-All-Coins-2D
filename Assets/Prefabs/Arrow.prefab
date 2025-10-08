@@ -149,6 +149,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 15
   damage: 10
-  collisionLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295

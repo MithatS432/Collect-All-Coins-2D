@@ -1024,6 +1024,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!61 &492269402 stripped
+BoxCollider2D:
+  m_CorrespondingSourceObject: {fileID: 7017607285960787783, guid: df5c4c59f13fd9a4cad691c9f49cb180, type: 3}
+  m_PrefabInstance: {fileID: 2218773851659523747}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &556863123
 GameObject:
   m_ObjectHideFlags: 0
@@ -1460,7 +1465,7 @@ GameObject:
   - component: {fileID: 924326680}
   m_Layer: 0
   m_Name: Environment
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1490,6 +1495,7 @@ Transform:
   - {fileID: 29901793}
   - {fileID: 913628498}
   - {fileID: 1514031650}
+  - {fileID: 1775697218}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1098689096
@@ -2149,12 +2155,12 @@ Transform:
   m_GameObject: {fileID: 1775697216}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -11.874, y: 1.485, z: -0.08068107}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2132941719}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 924326680}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1804877643
 GameObject:
@@ -16207,6 +16213,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7829850784586167928, guid: df5c4c59f13fd9a4cad691c9f49cb180, type: 3}
+      propertyPath: swordCollider
+      value: 
+      objectReference: {fileID: 492269402}
     - target: {fileID: 7914535954920682643, guid: df5c4c59f13fd9a4cad691c9f49cb180, type: 3}
       propertyPath: m_Name
       value: Soldier
@@ -16342,7 +16352,6 @@ SceneRoots:
   - {fileID: 556863125}
   - {fileID: 924326680}
   - {fileID: 413069427}
-  - {fileID: 1775697218}
   - {fileID: 2218773851659523747}
   - {fileID: 328184325}
   - {fileID: 3324388045794739136}
