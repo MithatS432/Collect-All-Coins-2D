@@ -8,18 +8,20 @@ public class Soldier : MonoBehaviour
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer sprite;
+    private SwordAttack swordAttack;
+
+    [Header("Audio Clips")]
     public AudioClip attackSound, hurtSound, deathSound, coinSound, jumpSound;
 
     [Header("Game Stats")]
     public int currentHealth = 200;
-    public int startCoins = 10;
-    public int startArrows = 10;
     private int maxHealth = 200;
-    private bool isArrowLeft = true;
+    public int startCoins = 4;   // Her bölümde sabit 4 coin
+    public int startArrows = 10;
     public bool isFinished;
     public bool isGrounded;
 
-    [Header("Settings")]
+    [Header("Movement Settings")]
     private float speed = 5f;
     private float jumpForce = 7f;
     private float xRange = -10f;
@@ -29,15 +31,13 @@ public class Soldier : MonoBehaviour
     public Transform firePoint;
     private List<GameObject> arrowPool = new List<GameObject>();
     private int poolSize = 10;
-
-    private SwordAttack swordAttack;
-    private int attackIndex = 0;
+    private bool isArrowLeft = true;
 
     private static Soldier instance;
 
-    void Awake()
+    private void Awake()
     {
-        PlayerPrefs.DeleteAll(); //test amaçlı
+        PlayerPrefs.DeleteAll();
         if (instance == null)
         {
             instance = this;
@@ -49,41 +49,46 @@ public class Soldier : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
     }
 
-    void Start()
+    private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
         swordAttack = GetComponentInChildren<SwordAttack>();
 
+        // Basic runtime checks to help diagnose missing Inspector assignments
+        if (rb == null) Debug.LogError("Soldier: Rigidbody2D component missing on " + gameObject.name);
+        if (anim == null) Debug.LogWarning("Soldier: Animator component missing on " + gameObject.name + ". Arrow/Hit/Die animations won't play.");
+        if (sprite == null) Debug.LogError("Soldier: SpriteRenderer component missing on " + gameObject.name);
+        if (swordAttack == null) Debug.LogWarning("Soldier: SwordAttack child component not found. Melee attacks won't work.");
+        if (arrowPrefab == null) Debug.LogWarning("Soldier: arrowPrefab not assigned in Inspector. BowAttack will not spawn arrows.");
+        if (firePoint == null) Debug.LogWarning("Soldier: firePoint not assigned in Inspector. Arrows won't have a spawn position.");
+
         LoadPlayerData();
         CreateArrowPool();
         ForceUIUpdate();
     }
 
-    void Update()
+    private void Update()
     {
         if (Input.GetButtonDown("Jump") && isGrounded) Jump();
         if (Input.GetMouseButtonDown(0)) Attack();
         if (Input.GetMouseButtonDown(1) && isArrowLeft) BowAttack();
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         float x = Input.GetAxis("Horizontal");
         transform.position += new Vector3(x, 0, 0) * Time.fixedDeltaTime * speed;
         anim.SetFloat("Speed", Mathf.Abs(x));
-
         sprite.flipX = x < 0;
 
         if (transform.position.x < xRange)
             transform.position = new Vector3(xRange, transform.position.y, transform.position.z);
     }
 
-    // 🎯 BU METODU EKLE - UI GÜNCELLEME
     public void ForceUIUpdate()
     {
         if (UIManager.Instance != null)
@@ -91,45 +96,45 @@ public class Soldier : MonoBehaviour
             UIManager.Instance.UpdateCoins(startCoins);
             UIManager.Instance.UpdateArrows(startArrows);
             UIManager.Instance.UpdateHealth((float)currentHealth / maxHealth);
-            Debug.Log("ForceUIUpdate called!");
-        }
-        else
-        {
-            Debug.LogError("UIManager.Instance is null!");
         }
     }
 
-    void Jump()
+    private void Jump()
     {
         AudioSource.PlayClipAtPoint(jumpSound, transform.position);
         rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         isGrounded = false;
     }
 
-    void Attack()
+    private void Attack()
     {
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
-        attackIndex = (attackIndex % 2) + 1;
-        anim.SetInteger("AttackIndex", attackIndex);
-        anim.SetTrigger("Attack");
-
+        if (anim != null)
+            anim.SetTrigger("Attack");
+        else
+            Debug.Log("Soldier: Attack trigger skipped because Animator is null");
         if (swordAttack != null) swordAttack.DoSwordAttack();
     }
 
-    void BowAttack()
+    private void BowAttack()
     {
         startArrows--;
-        PlayerPrefs.SetInt("Arrows", startArrows);
-        PlayerPrefs.Save();
-
-        // UI'YI HEMEN GÜNCELLE
         if (UIManager.Instance != null)
             UIManager.Instance.UpdateArrows(startArrows);
 
         if (startArrows <= 0) isArrowLeft = false;
 
         AudioSource.PlayClipAtPoint(attackSound, transform.position);
-        anim.SetTrigger("BowAttack");
+        if (anim != null)
+            anim.SetTrigger("BowAttack");
+        else
+            Debug.Log("Soldier: BowAttack trigger skipped because Animator is null");
+
+        if (arrowPrefab == null || firePoint == null)
+        {
+            Debug.LogWarning("Soldier: Cannot spawn arrow because arrowPrefab or firePoint is not assigned.");
+            return;
+        }
 
         GameObject arrowObj = GetArrowFromPool();
         if (arrowObj != null)
@@ -138,127 +143,51 @@ public class Soldier : MonoBehaviour
             arrowObj.SetActive(true);
 
             Arrow arrow = arrowObj.GetComponent<Arrow>();
-            Vector2 shootDir = sprite.flipX ? Vector2.left : Vector2.right;
-            arrow.Initialize(shootDir);
+            if (arrow != null)
+            {
+                Vector2 shootDir = sprite != null && sprite.flipX ? Vector2.left : Vector2.right;
+                arrow.Initialize(shootDir);
+            }
+            else
+            {
+                Debug.LogWarning("Soldier: Pooled arrow doesn't have an Arrow component.");
+            }
+        }
+        else
+        {
+            Debug.Log("Soldier: No available arrows in pool to fire.");
         }
     }
 
-    GameObject GetArrowFromPool()
+    private GameObject GetArrowFromPool()
     {
         foreach (GameObject arrow in arrowPool)
-        {
-            if (arrow != null && !arrow.activeInHierarchy)
-                return arrow;
-        }
+            if (!arrow.activeInHierarchy) return arrow;
         return null;
-    }
-
-    public void AddArrowsToPool(int amount)
-    {
-        for (int i = 0; i < amount; i++)
-        {
-            GameObject arrow = Instantiate(arrowPrefab);
-            arrow.SetActive(false);
-            arrowPool.Add(arrow);
-        }
-
-        startArrows += amount;
-        isArrowLeft = true;
-        PlayerPrefs.SetInt("Arrows", startArrows);
-        PlayerPrefs.Save();
-
-        // UI'YI HEMEN GÜNCELLE
-        if (UIManager.Instance != null)
-            UIManager.Instance.UpdateArrows(startArrows);
-    }
-
-    public void GetDamage(int damage)
-    {
-        currentHealth -= damage;
-        PlayerPrefs.SetInt("Health", currentHealth);
-        PlayerPrefs.Save();
-
-        // UI'YI HEMEN GÜNCELLE
-        if (UIManager.Instance != null)
-            UIManager.Instance.UpdateHealth((float)currentHealth / maxHealth);
-
-        AudioSource.PlayClipAtPoint(hurtSound, transform.position);
-        anim.SetTrigger("Hurt");
-
-        if (currentHealth <= 0)
-        {
-            AudioSource.PlayClipAtPoint(deathSound, transform.position);
-            anim.SetTrigger("Die");
-            Invoke(nameof(Die), 1.5f);
-        }
-    }
-
-    private void Die()
-    {
-        PlayerPrefs.DeleteKey("Health");
-        PlayerPrefs.DeleteKey("Arrows");
-        PlayerPrefs.DeleteKey("Coins");
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.CompareTag("Coin"))
+        if (other.CompareTag("Coin"))
         {
             AudioSource.PlayClipAtPoint(coinSound, transform.position);
             Destroy(other.gameObject);
             startCoins--;
-            PlayerPrefs.SetInt("Coins", startCoins);
-            PlayerPrefs.Save();
-
-            // UI'YI HEMEN GÜNCELLE
             if (UIManager.Instance != null)
                 UIManager.Instance.UpdateCoins(startCoins);
 
             if (startCoins <= 0)
             {
                 isFinished = true;
-                ShowCoinsCollectedText();
             }
         }
 
-        if (other.gameObject.CompareTag("ArrowItem"))
-        {
-            Destroy(other.gameObject);
-            AddArrowsToPool(5);
-        }
-    }
-    private void ShowCoinsCollectedText()
-    {
-        if (UIManager.Instance != null && UIManager.Instance.coinsDoneText != null)
-        {
-            UIManager.Instance.coinsDoneText.text = "COINS COLLECTED!";
-            UIManager.Instance.coinsDoneText.gameObject.SetActive(true);
-            Invoke(nameof(HideCoinsCollectedText), 1f); // 1 saniye sonra gizle
-        }
-    }
+        if (other.CompareTag("Ground")) isGrounded = true;
 
-    private void HideCoinsCollectedText()
-    {
-        if (UIManager.Instance != null && UIManager.Instance.coinsDoneText != null)
+        if (other.CompareTag("Flag") && isFinished)
         {
-            UIManager.Instance.coinsDoneText.gameObject.SetActive(false);
-        }
-    }
-
-    private void OnCollisionEnter2D(Collision2D other)
-    {
-        if (other.gameObject.CompareTag("Flag") && isFinished)
-        {
-            SavePlayerData();
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
-
-        if (other.gameObject.CompareTag("Ground"))
-            isGrounded = true;
-
-        if (other.gameObject.CompareTag("Space"))
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -270,32 +199,70 @@ public class Soldier : MonoBehaviour
         else
         {
             gameObject.SetActive(true);
-            LoadPlayerData();
+            startCoins = 4; // her sahnede sıfırdan 4 coin
             ForceUIUpdate();
-
             transform.position = Vector3.zero;
-
-            isFinished = false;
-            isGrounded = false;
         }
-        CameraFollow cam = Camera.main.GetComponent<CameraFollow>();
+
+        CameraFollow cam = Camera.main?.GetComponent<CameraFollow>();
         if (cam != null)
-            cam.target = this.transform;
+            cam.target = transform;
     }
+    public void GetDamage(int damage)
+    {
+        currentHealth -= damage;
+        if (currentHealth < 0) currentHealth = 0;
+
+        // UI güncelle
+        if (UIManager.Instance != null)
+            UIManager.Instance.UpdateHealth((float)currentHealth / maxHealth);
+
+        // Ses efekti çal
+        if (hurtSound != null)
+            AudioSource.PlayClipAtPoint(hurtSound, transform.position);
+        else
+            Debug.Log("Soldier: hurtSound not set (optional)");
+
+        // Eğer can sıfırsa öl
+        if (currentHealth <= 0)
+            Die();
+        else
+        {
+            if (anim != null)
+                anim.SetTrigger("Hit");
+            else
+                Debug.Log("Soldier: Hit trigger skipped because Animator is null");
+        }
+    }
+
+    private void Die()
+    {
+        // Ölüm sesi
+        if (deathSound != null)
+            AudioSource.PlayClipAtPoint(deathSound, transform.position);
+
+        // Ölüm animasyonu
+        if (anim != null)
+            anim.SetTrigger("Die");
+
+        // Oyuncuyu devre dışı bırak
+        rb.simulated = false;
+        this.enabled = false;
+
+        // 2 saniye sonra ana menüye dön
+        Invoke(nameof(ReturnToMainMenu), 2f);
+    }
+
+    private void ReturnToMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
+    }
+
 
     private void LoadPlayerData()
     {
         currentHealth = PlayerPrefs.GetInt("Health", maxHealth);
         startArrows = PlayerPrefs.GetInt("Arrows", startArrows);
-        startCoins = PlayerPrefs.GetInt("Coins", startCoins);
-    }
-
-    private void SavePlayerData()
-    {
-        PlayerPrefs.SetInt("Health", currentHealth);
-        PlayerPrefs.SetInt("Arrows", startArrows);
-        PlayerPrefs.SetInt("Coins", startCoins);
-        PlayerPrefs.Save();
     }
 
     private void CreateArrowPool()
@@ -308,7 +275,7 @@ public class Soldier : MonoBehaviour
         }
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }

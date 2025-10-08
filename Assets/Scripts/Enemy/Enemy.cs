@@ -125,7 +125,7 @@ public class Enemy : MonoBehaviour
             collider.enabled = false;
         }
 
-        Destroy(gameObject, 2f);
+        Destroy(gameObject, 1f);
     }
 
     // Alternatif: Enemy ölünce sabit kalsın istiyorsan
@@ -154,6 +154,6 @@ public class Enemy : MonoBehaviour
         // Mevcut pozisyonda sabit kal
         transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
 
-        Destroy(gameObject, 2f);
+        Destroy(gameObject, 1f);
     }
 }

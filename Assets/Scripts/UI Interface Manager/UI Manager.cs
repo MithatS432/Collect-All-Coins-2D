@@ -7,13 +7,13 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
 
-    [Header("UI References - Inspector'dan ata")]
+    [Header("UI References")]
     public TMP_Text coinsLeftText;
     public TMP_Text coinsDoneText;
     public TMP_Text arrowsLeftText;
     public Image healthBarImage;
 
-    void Awake()
+    private void Awake()
     {
         if (Instance == null)
         {
@@ -27,73 +27,52 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name != "MainMenu")
+        if (scene.name == "MainMenu")
         {
+            gameObject.SetActive(false); // Canvas gizlenir
+        }
+        else
+        {
+            gameObject.SetActive(true); // Oyun sahnelerinde görünür
             FindUIElements();
 
-            // Soldier'ı bul ve UI'yı güncelle
-            Soldier player = FindAnyObjectByType<Soldier>(); // Güncellenmiş metod
+            Soldier player = FindAnyObjectByType<Soldier>();
             if (player != null)
-            {
-                player.ForceUIUpdate(); // Bu metodu Soldier'a ekleyeceğiz
-            }
+                player.ForceUIUpdate();
         }
     }
 
     private void FindUIElements()
     {
-        GameObject coinsLeftObj = GameObject.Find("CoinsLeftUI");
-        GameObject coinsDoneObj = GameObject.Find("CoinsDoneUI");
-        GameObject arrowsLeftObj = GameObject.Find("ArrowLeftUI");
-        GameObject healthBarObj = GameObject.Find("HealthUI");
-
-        if (coinsLeftObj != null) coinsLeftText = coinsLeftObj.GetComponent<TMP_Text>();
-        if (coinsDoneObj != null) coinsDoneText = coinsDoneObj.GetComponent<TMP_Text>();
-        if (arrowsLeftObj != null) arrowsLeftText = arrowsLeftObj.GetComponent<TMP_Text>();
-        if (healthBarObj != null) healthBarImage = healthBarObj.GetComponent<Image>();
-
-        Debug.Log("UI Elements Found - Coins: " + (coinsLeftText != null) +
-                 ", Arrows: " + (arrowsLeftText != null) +
-                 ", Health: " + (healthBarImage != null));
+        coinsLeftText = GameObject.Find("CoinsLeftUI")?.GetComponent<TMP_Text>();
+        coinsDoneText = GameObject.Find("CoinsDoneUI")?.GetComponent<TMP_Text>();
+        arrowsLeftText = GameObject.Find("ArrowLeftUI")?.GetComponent<TMP_Text>();
+        healthBarImage = GameObject.Find("HealthUI")?.GetComponent<Image>();
     }
 
     public void UpdateCoins(int coins)
     {
         if (coinsLeftText != null)
-        {
             coinsLeftText.text = "Coins Left: " + coins;
-            Debug.Log("Coins UI Updated: " + coins);
-        }
 
         if (coinsDoneText != null)
-        {
             coinsDoneText.gameObject.SetActive(coins <= 0);
-        }
     }
 
     public void UpdateArrows(int arrows)
     {
         if (arrowsLeftText != null)
-        {
-            if (arrows <= 0)
-                arrowsLeftText.text = "NONE";
-            else
-                arrowsLeftText.text = "Arrows Left: " + arrows;
-
-            Debug.Log("Arrows UI Updated: " + arrows);
-        }
+            arrowsLeftText.text = arrows > 0 ? $"Arrows Left: {arrows}" : "NONE";
     }
 
     public void UpdateHealth(float healthPercent)
     {
         if (healthBarImage != null)
-        {
             healthBarImage.fillAmount = healthPercent;
-            Debug.Log("Health UI Updated: " + healthPercent);
-        }
     }
+
     public void BackToMainMenu()
     {
         SceneManager.LoadScene("MainMenu");
